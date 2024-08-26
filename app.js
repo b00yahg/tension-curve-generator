@@ -55,6 +55,9 @@ function createChart() {
                             return event ? `${event.name}: Tension ${context.parsed.y}%` : `Tension: ${context.parsed.y}%`;
                         }
                     }
+                },
+                annotation: {
+                    annotations: []
                 }
             }
         }
@@ -101,7 +104,25 @@ function updateEventForm(event, index) {
 
 // Provide Recommendations
 function provideRecommendation() {
-    // ... (keep existing recommendation logic)
+    const recommendationText = document.getElementById('recommendation-text');
+    const lastEvent = events[events.length - 1];
+    const tension = parseFloat(lastEvent.y);
+
+    let recommendation = '';
+
+    if (tension < 20) {
+        recommendation = "The tension is quite low. Consider introducing a minor conflict or hint at future challenges to engage your players.";
+    } else if (tension >= 20 && tension < 40) {
+        recommendation = "The story is building up nicely. This is a good time for character development or to introduce subplot elements.";
+    } else if (tension >= 40 && tension < 60) {
+        recommendation = "The tension is moderate. You might want to escalate the conflict or introduce a plot twist to keep players engaged.";
+    } else if (tension >= 60 && tension < 80) {
+        recommendation = "The story is reaching a high point. Consider introducing major revelations or confrontations.";
+    } else {
+        recommendation = "The tension is very high. This is an excellent time for climactic events or major plot resolutions.";
+    }
+
+    recommendationText.textContent = recommendation;
 }
 
 // Add a new act/chapter division
@@ -111,20 +132,49 @@ function addAct() {
     
     acts.push(actX);
     
-    tensionChart.options.plugins.annotation.annotations.push({
+    updateActAnnotations();
+
+    tensionChart.update();
+    updateActsList();
+}
+
+// Update act annotations on the chart
+function updateActAnnotations() {
+    tensionChart.options.plugins.annotation.annotations = acts.map((act, index) => ({
         type: 'line',
         mode: 'vertical',
         scaleID: 'x',
-        value: actX,
+        value: act,
         borderColor: 'rgb(105, 105, 105)',
         borderWidth: 2,
         label: {
-            content: `Act ${acts.length}`,
-            enabled: true
+            content: `Act ${index + 1}`,
+            enabled: true,
+            position: 'top'
         }
-    });
+    }));
+}
 
+// Update the list of acts in the sidebar
+function updateActsList() {
+    const actsList = document.getElementById('acts-list');
+    actsList.innerHTML = '';
+    acts.forEach((act, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>Act ${index + 1} (${act})</span>
+            <button onclick="removeAct(${index})">Remove</button>
+        `;
+        actsList.appendChild(li);
+    });
+}
+
+// Remove an act
+function removeAct(index) {
+    acts.splice(index, 1);
+    updateActAnnotations();
     tensionChart.update();
+    updateActsList();
 }
 
 // Save event details
@@ -147,6 +197,7 @@ function saveEvent(e) {
 
     updateEventsList();
     tensionChart.update();
+    provideRecommendation();
     console.log('Event saved:', event);
     alert('Event saved successfully!');
 }
@@ -202,30 +253,16 @@ function loadCampaign() {
         events = campaign.events;
 
         tensionChart.data = tensionData;
-        tensionChart.options.plugins.annotation.annotations = acts.map((act, index) => ({
-            type: 'line',
-            mode: 'vertical',
-            scaleID: 'x',
-            value: act,
-            borderColor: 'rgb(105, 105, 105)',
-            borderWidth: 2,
-            label: {
-                content: `Act ${index + 1}`,
-                enabled: true
-            }
-        }));
+        updateActAnnotations();
 
         tensionChart.update();
         updateEventsList();
+        updateActsList();
+        provideRecommendation();
         alert('Campaign loaded successfully!');
     } else {
         alert('No saved campaign found!');
     }
-}
-
-// Prompt for campaign name
-function getCampaignName() {
-    return prompt("Enter your campaign name:", "My D&D Campaign");
 }
 
 // Export the chart as an image with labels and key
@@ -365,26 +402,6 @@ function exportAsImage() {
     a.click();
 }
 
-// Helper function to wrap text
-function getLines(ctx, text, maxWidth) {
-    const words = text.split(" ");
-    const lines = [];
-    let currentLine = words[0];
-
-    for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = ctx.measureText(currentLine + " " + word).width;
-        if (width < maxWidth) {
-            currentLine += " " + word;
-        } else {
-            lines.push(currentLine);
-            currentLine = word;
-        }
-    }
-    lines.push(currentLine);
-    return lines;
-}
-
 // Remove a point from the chart
 function removePoint(index) {
     tensionData.labels.splice(index, 1);
@@ -392,6 +409,22 @@ function removePoint(index) {
     events.splice(index, 1);
     tensionChart.update();
     updateEventsList();
+    provideRecommendation();
+}
+
+// Clear all data
+function clearAll() {
+    if (confirm("Are you sure you want to clear all data? This action cannot be undone.")) {
+        tensionData.labels = [];
+        tensionData.datasets[0].data = [];
+        acts = [];
+        events = [];
+        tensionChart.update();
+        updateEventsList();
+        updateActsList();
+        document.getElementById('recommendation-text').textContent = '';
+        alert('All data cleared successfully!');
+    }
 }
 
 // Setup event listeners
@@ -401,6 +434,7 @@ function setupEventListeners() {
     document.getElementById('load-btn').addEventListener('click', loadCampaign);
     document.getElementById('export-btn').addEventListener('click', exportAsImage);
     document.getElementById('add-act-btn').addEventListener('click', addAct);
+    document.getElementById('clear-all-btn').addEventListener('click', clearAll);
 }
 
 // Initialize the app when the DOM is fully loaded
