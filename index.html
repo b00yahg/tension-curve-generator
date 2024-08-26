@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D Campaign Tension Curve Designer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>D&D Campaign Tension Curve Designer</h1>
+    </header>
+    <main>
+        <div id="graph-container">
+            <canvas id="tension-graph"></canvas>
+        </div>
+        <div id="sidebar">
+            <div id="event-details">
+                <h2>Event Details</h2>
+                <form id="event-form">
+                    <label for="event-name">Event Name:</label>
+                    <input type="text" id="event-name" name="event-name">
+                    
+                    <label for="event-description">Description:</label>
+                    <textarea id="event-description" name="event-description"></textarea>
+                    
+                    <label for="event-act">Act/Chapter:</label>
+                    <input type="text" id="event-act" name="event-act">
+                    
+                    <button type="submit">Save Event</button>
+                </form>
+            </div>
+            <div id="recommendations">
+                <h2>Recommendations</h2>
+                <p id="recommendation-text"></p>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <button id="save-btn">Save Campaign</button>
+        <button id="load-btn">Load Campaign</button>
+        <button id="export-btn">Export as Image</button>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
