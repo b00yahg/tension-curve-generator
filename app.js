@@ -47,14 +47,12 @@ function createChart() {
             },
             onClick: handleChartClick,
             plugins: {
-                annotation: {
-                    annotations: []
-                },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const event = events.find(e => e.x === context.parsed.x && e.y === context.parsed.y);
-                            return event ? `${event.name}: Tension ${context.parsed.y}` : `Tension: ${context.parsed.y}`;
+                            const index = context.dataIndex;
+                            const event = events[index];
+                            return event ? `${event.name}: Tension ${context.parsed.y}%` : `Tension: ${context.parsed.y}%`;
                         }
                     }
                 }
@@ -76,21 +74,26 @@ function addDataPoint(x, y) {
     const index = tensionData.labels.push(x.toFixed(2)) - 1;
     tensionData.datasets[0].data.push(y.toFixed(2));
     
-    // Create a default event name
-    const eventName = `Event at (${x.toFixed(2)}, ${y.toFixed(2)})`;
-    
-    // Add the event to the events array
-    events.push({ x: x.toFixed(2), y: y.toFixed(2), name: eventName, description: '', act: '' });
+    // Create a temporary event
+    const tempEvent = {
+        x: x.toFixed(2),
+        y: y.toFixed(2),
+        name: `Event at (${x.toFixed(2)}, ${y.toFixed(2)})`,
+        description: '',
+        act: ''
+    };
     
     tensionChart.update();
-    updateEventForm(x, y, index);
+    updateEventForm(tempEvent, index);
     provideRecommendation();
 }
 
 // Update the event form with new coordinates
-function updateEventForm(x, y, index) {
-    document.getElementById('event-name').value = events[index].name;
-    document.getElementById('event-index').value = index; // Add a hidden input for the event index
+function updateEventForm(event, index) {
+    document.getElementById('event-name').value = event.name;
+    document.getElementById('event-description').value = event.description;
+    document.getElementById('event-act').value = event.act;
+    document.getElementById('event-index').value = index;
 }
 // Provide Recomonedations
 function provideRecommendation() {
@@ -164,11 +167,25 @@ function saveEvent(e) {
     const name = document.getElementById('event-name').value;
     const description = document.getElementById('event-description').value;
     const act = document.getElementById('event-act').value;
-    const index = document.getElementById('event-index').value;
+    const index = parseInt(document.getElementById('event-index').value);
 
-    events[index] = { ...events[index], name, description, act };
+    const event = {
+        x: tensionData.labels[index],
+        y: tensionData.datasets[0].data[index],
+        name,
+        description,
+        act
+    };
+
+    if (index >= events.length) {
+        events.push(event);
+    } else {
+        events[index] = event;
+    }
+
     updateEventsList();
     tensionChart.update(); // Force chart update to refresh tooltips
+    alert('Event saved successfully!');
 }
 
 // Update the list of events in the sidebar
@@ -245,11 +262,7 @@ function exportAsImage() {
 
 // Setup event listeners
 function setupEventListeners() {
-    document.getElementById('event-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        saveEvent();
-    });
-
+    document.getElementById('event-form').addEventListener('submit', saveEvent);
     document.getElementById('save-btn').addEventListener('click', saveCampaign);
     document.getElementById('load-btn').addEventListener('click', loadCampaign);
     document.getElementById('export-btn').addEventListener('click', exportAsImage);
