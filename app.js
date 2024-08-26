@@ -83,6 +83,8 @@ function addDataPoint(x, y) {
         act: ''
     };
     
+    events.push(tempEvent);  // Add this line to ensure the event is added to the events array
+    
     tensionChart.update();
     updateEventForm(tempEvent, index);
     provideRecommendation();
@@ -95,7 +97,8 @@ function updateEventForm(event, index) {
     document.getElementById('event-act').value = event.act;
     document.getElementById('event-index').value = index;
 }
-// Provide Recomonedations
+
+// Provide Recommendations
 function provideRecommendation() {
     const data = tensionData.datasets[0].data;
     const lastPoint = Math.round(parseFloat(data[data.length - 1]));
@@ -138,6 +141,7 @@ function provideRecommendation() {
 
     document.getElementById('recommendation-text').innerHTML = recommendation.replace(/\n/g, '<br>');
 }
+
 // Add a new act/chapter division
 function addAct() {
     const actX = tensionData.labels.length > 0 ? 
@@ -177,14 +181,11 @@ function saveEvent(e) {
         act
     };
 
-    if (index >= events.length) {
-        events.push(event);
-    } else {
-        events[index] = event;
-    }
+    events[index] = event;
 
     updateEventsList();
     tensionChart.update(); // Force chart update to refresh tooltips
+    console.log('Event saved:', event); // Add this line for debugging
     alert('Event saved successfully!');
 }
 
@@ -206,6 +207,7 @@ function showEventDetails(index) {
     document.getElementById('event-name').value = event.name;
     document.getElementById('event-description').value = event.description;
     document.getElementById('event-act').value = event.act;
+    document.getElementById('event-index').value = index;
 }
 
 // Save the campaign to local storage
