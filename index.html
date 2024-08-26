@@ -17,6 +17,18 @@
             <canvas id="tension-graph"></canvas>
         </div>
         <div id="sidebar">
+            <div id="campaign-controls">
+                <h2>Campaign Management</h2>
+                <button id="save-btn">Save Campaign</button>
+                <button id="load-btn">Load Campaign</button>
+                <button id="export-btn">Export as Image</button>
+                <button id="clear-all-btn">Clear All</button>
+            </div>
+            <div id="act-management">
+                <h2>Act Management</h2>
+                <button id="add-act-btn">Add New Act</button>
+                <div id="acts-list"></div>
+            </div>
             <div id="event-details">
                 <h2>Event Details</h2>
                 <form id="event-form">
@@ -27,30 +39,24 @@
                     <textarea id="event-description" name="event-description"></textarea>
     
                     <label for="event-act">Act/Chapter:</label>
-                    <input type="text" id="event-act" name="event-act">
+                    <input type="number" id="event-act" name="event-act" min="1" required>
     
                     <input type="hidden" id="event-index" name="event-index">
                     <button type="submit">Save Event</button>
                 </form>
             </div>
             <div id="events-list-container">
-                <h3>Events</h3>
+                <h2>Events</h2>
                 <ul id="events-list"></ul>
             </div>
             <div id="recommendations">
                 <h2>Recommendations</h2>
                 <p id="recommendation-text"></p>
             </div>
-            <div id="controls">
-                <button id="add-act-btn">Add Act/Chapter</button>
-                <button id="save-btn">Save Campaign</button>
-                <button id="load-btn">Load Campaign</button>
-                <button id="export-btn">Export as Image</button>
-            </div>
         </div>
     </main>
     <footer>
-        <p>&copy; Campaign Tension Curve Designed by DragnaCarta. You can subscribe to him at https://www.patreon.com/DragnaCarta</p>
+        <p>&copy; Campaign Tension Curve Designed by DragnaCarta. Subscribe at <a href="https://www.patreon.com/DragnaCarta" target="_blank">Patreon</a></p>
     </footer>
     <script src="app.js"></script>
 </body>
