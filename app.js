@@ -338,14 +338,6 @@ function exportAsImage() {
     a.click();
 }
 
-    // Convert to image and trigger download
-    const url = tempCanvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'tension_curve_with_key.png';
-    a.click();
-}
-
 // Helper function to wrap text (add this if it's not already in your code)
 function getLines(ctx, text, maxWidth) {
     const words = text.split(" ");
