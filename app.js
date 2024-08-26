@@ -269,7 +269,7 @@ function exportAsImage() {
     tempCtx.drawImage(tensionChart.canvas, 0, 25, tensionChart.width, tensionChart.height);
 
     // Add labels for each point
-    tensionChart.data.labels.forEach((label, index) => {
+    tensionData.labels.forEach((label, index) => {
         const event = events[index];
         if (event) {
             const point = tensionChart.getDatasetMeta(0).data[index];
@@ -311,7 +311,7 @@ function exportAsImage() {
     a.click();
 }
 
-// Helper function to wrap text
+// Helper function to wrap text (add this if it's not already in your code)
 function getLines(ctx, text, maxWidth) {
     const words = text.split(" ");
     const lines = [];
