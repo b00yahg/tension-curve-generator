@@ -84,30 +84,28 @@ function addDataPoint(x, y) {
 function updateEventForm(x, y) {
     document.getElementById('event-name').value = `Event at (${x.toFixed(2)}, ${y.toFixed(2)})`;
 }
-
-// Provide recommendations based on the current tension curve
-// Provide recommendations based on the current tension curve
+// Provide Recomonedations
 function provideRecommendation() {
     const data = tensionData.datasets[0].data;
-    const lastPoint = parseFloat(data[data.length - 1]);
-    const secondLastPoint = data.length > 1 ? parseFloat(data[data.length - 2]) : 0;
+    const lastPoint = Math.round(parseFloat(data[data.length - 1]));
+    const secondLastPoint = data.length > 1 ? Math.round(parseFloat(data[data.length - 2])) : 0;
 
     let recommendation = "";
-    let changePercentage = 0;
+    let changeAmount = 0;
     let direction = "";
 
     if (data.length < 2) {
         recommendation = "Add more points to get a recommendation. For the first point, consider a moderate rise in tension (around 20-30%).";
     } else {
-        changePercentage = ((lastPoint - secondLastPoint) / secondLastPoint * 100).toFixed(2);
-        direction = lastPoint > secondLastPoint ? "up" : "down";
+        changeAmount = lastPoint - secondLastPoint;
+        direction = changeAmount > 0 ? "up" : "down";
 
         if (direction === "up") {
-            const suggestedChange = Math.max(5, Math.abs(changePercentage) - 5);
-            recommendation = `Tension has gone up by ${changePercentage}%. Consider decreasing it by about ${suggestedChange}%.`;
+            const suggestedChange = Math.min(Math.max(5, changeAmount - 5), 100 - lastPoint);
+            recommendation = `Tension has gone up by ${changeAmount}%. Consider decreasing it by about ${suggestedChange}%.`;
         } else {
-            const suggestedChange = Math.max(5, Math.abs(changePercentage) + 5);
-            recommendation = `Tension has gone down by ${Math.abs(changePercentage)}%. Consider increasing it by about ${suggestedChange}%.`;
+            const suggestedChange = Math.min(Math.max(5, Math.abs(changeAmount) + 5), lastPoint);
+            recommendation = `Tension has gone down by ${Math.abs(changeAmount)}%. Consider increasing it by about ${suggestedChange}%.`;
         }
 
         if (data.length > 5 && Math.random() < 0.3) {
