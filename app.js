@@ -254,46 +254,69 @@ function loadCampaign() {
 }
 
 function exportAsImage() {
+    // Calculate required height for all events
+    const eventKeyHeight = events.reduce((height, event) => {
+        const descriptionLines = getLines(document.createElement('canvas').getContext('2d'), event.description, 370);
+        return height + 25 + descriptionLines.length * 20 + 10;
+    }, 60);
+
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = tensionChart.width + 400; // More space for the key
-    tempCanvas.height = Math.max(tensionChart.height + 50, events.length * 30 + 100); // Ensure enough height for all events
+    tempCanvas.height = Math.max(tensionChart.height + 100, eventKeyHeight + 50); // Ensure enough height for all events
     const tempCtx = tempCanvas.getContext('2d');
 
-    // Fill background
-    tempCtx.fillStyle = '#f4e6c5';
+    // Create parchment-like background
+    const gradient = tempCtx.createLinearGradient(0, 0, tempCanvas.width, tempCanvas.height);
+    gradient.addColorStop(0, '#f4e6c5');
+    gradient.addColorStop(1, '#e8d5a9');
+    tempCtx.fillStyle = gradient;
     tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
+    // Add subtle texture
+    tempCtx.globalAlpha = 0.05;
+    for (let i = 0; i < 300; i++) {
+        tempCtx.fillStyle = Math.random() > 0.5 ? '#000' : '#fff';
+        tempCtx.fillRect(Math.random() * tempCanvas.width, Math.random() * tempCanvas.height, 1, 1);
+    }
+    tempCtx.globalAlpha = 1;
+
+    // Draw a border
+    tempCtx.strokeStyle = '#8B4513';
+    tempCtx.lineWidth = 5;
+    tempCtx.strokeRect(10, 10, tempCanvas.width - 20, tempCanvas.height - 20);
+
     // Draw original chart
-    tempCtx.drawImage(tensionChart.canvas, 0, 25, tensionChart.width, tensionChart.height);
+    tempCtx.drawImage(tensionChart.canvas, 20, 45, tensionChart.width - 20, tensionChart.height - 20);
 
     // Add numbered markers for each point
     tensionData.labels.forEach((label, index) => {
         const point = tensionChart.getDatasetMeta(0).data[index];
         tempCtx.beginPath();
-        tempCtx.arc(point.x, point.y, 10, 0, 2 * Math.PI);
+        tempCtx.arc(point.x, point.y + 20, 10, 0, 2 * Math.PI);
         tempCtx.fillStyle = 'white';
         tempCtx.fill();
-        tempCtx.strokeStyle = 'black';
+        tempCtx.strokeStyle = '#8B4513';
         tempCtx.stroke();
-        tempCtx.fillStyle = 'black';
-        tempCtx.font = 'bold 12px Arial';
+        tempCtx.fillStyle = '#8B4513';
+        tempCtx.font = 'bold 12px "Bookman Old Style", Georgia, serif';
         tempCtx.textAlign = 'center';
         tempCtx.textBaseline = 'middle';
-        tempCtx.fillText(index + 1, point.x, point.y);
+        tempCtx.fillText(index + 1, point.x, point.y + 20);
     });
 
     // Add Event Key
-    tempCtx.font = 'bold 16px Arial';
+    tempCtx.font = 'bold 18px "Bookman Old Style", Georgia, serif';
+    tempCtx.fillStyle = '#8B4513';
     tempCtx.textAlign = 'left';
     tempCtx.fillText('Event Key:', tensionChart.width + 20, 30);
 
     let keyY = 60;
     events.forEach((event, index) => {
-        tempCtx.font = 'bold 14px Arial';
+        tempCtx.font = 'bold 14px "Bookman Old Style", Georgia, serif';
         tempCtx.fillText(`${index + 1}. ${event.name}`, tensionChart.width + 20, keyY);
         keyY += 25;
 
-        tempCtx.font = '12px Arial';
+        tempCtx.font = '12px "Bookman Old Style", Georgia, serif';
         const descriptionLines = getLines(tempCtx, event.description, 370);
         descriptionLines.forEach(line => {
             tempCtx.fillText(line, tensionChart.width + 40, keyY);
@@ -301,6 +324,19 @@ function exportAsImage() {
         });
         keyY += 10; // Extra space between events
     });
+
+    // Add title
+    tempCtx.font = 'bold 24px "Bookman Old Style", Georgia, serif';
+    tempCtx.textAlign = 'center';
+    tempCtx.fillText('D&D Tension Curve', tempCanvas.width / 2, 30);
+
+    // Convert to image and trigger download
+    const url = tempCanvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'D&D Tension Curve.png';
+    a.click();
+}
 
     // Convert to image and trigger download
     const url = tempCanvas.toDataURL('image/png');
