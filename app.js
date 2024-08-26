@@ -253,16 +253,20 @@ function loadCampaign() {
     }
 }
 
-// Export the chart as an image with labels
+// Export the chart as an image with labels and key
 function exportAsImage() {
     // Create a temporary canvas to draw on
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = tensionChart.width;
-    tempCanvas.height = tensionChart.height;
+    tempCanvas.width = tensionChart.width + 300; // Extra width for the key
+    tempCanvas.height = tensionChart.height + 50; // Extra height for padding
     const tempCtx = tempCanvas.getContext('2d');
 
+    // Fill the background with a light parchment color
+    tempCtx.fillStyle = '#f4e6c5';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
     // Draw the original chart to the temporary canvas
-    tempCtx.drawImage(tensionChart.canvas, 0, 0);
+    tempCtx.drawImage(tensionChart.canvas, 0, 25, tensionChart.width, tensionChart.height);
 
     // Add labels for each point
     tensionChart.data.labels.forEach((label, index) => {
@@ -272,23 +276,38 @@ function exportAsImage() {
             tempCtx.fillStyle = 'black';
             tempCtx.font = '12px Arial';
             tempCtx.textAlign = 'center';
-            tempCtx.fillText(event.name, point.x, point.y - 10);
             
-            // Add description if it exists and there's space
-            if (event.description) {
-                const lines = getLines(tempCtx, event.description, 150);
-                lines.forEach((line, lineIndex) => {
-                    tempCtx.fillText(line, point.x, point.y + 15 + (lineIndex * 15));
-                });
-            }
+            // Position the label above or below the point based on its position
+            const yOffset = point.y > tensionChart.height / 2 ? -15 : 20;
+            tempCtx.fillText(event.name, point.x, point.y + yOffset);
         }
+    });
+
+    // Add a key to the right of the chart
+    tempCtx.font = '14px Arial';
+    tempCtx.textAlign = 'left';
+    tempCtx.fillText('Event Key:', tensionChart.width + 10, 30);
+
+    let keyY = 60;
+    events.forEach((event, index) => {
+        tempCtx.font = 'bold 12px Arial';
+        tempCtx.fillText(`${index + 1}. ${event.name}`, tensionChart.width + 10, keyY);
+        keyY += 20;
+
+        tempCtx.font = '12px Arial';
+        const descriptionLines = getLines(tempCtx, event.description, 280);
+        descriptionLines.forEach(line => {
+            tempCtx.fillText(line, tensionChart.width + 20, keyY);
+            keyY += 15;
+        });
+        keyY += 10; // Extra space between events
     });
 
     // Convert the temporary canvas to a data URL and trigger download
     const url = tempCanvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'tension_curve_with_labels.png';
+    a.download = 'tension_curve_with_key.png';
     a.click();
 }
 
