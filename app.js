@@ -87,6 +87,7 @@ function addDataPoint(x, y) {
     
     tensionChart.update();
     updateEventForm(tempEvent, index);
+    updateEventsList();
     provideRecommendation();
 }
 
@@ -195,8 +196,11 @@ function updateEventsList() {
     eventsList.innerHTML = '';
     events.forEach((event, index) => {
         const li = document.createElement('li');
-        li.textContent = `${event.name} (Act ${event.act})`;
-        li.onclick = () => showEventDetails(index);
+        li.innerHTML = `
+            ${event.name} (Act ${event.act})
+            <button onclick="showEventDetails(${index})">Edit</button>
+            <button onclick="removePoint(${index})">Remove</button>
+        `;
         eventsList.appendChild(li);
     });
 }
@@ -253,7 +257,16 @@ function loadCampaign() {
     }
 }
 
+// Prompt for campaign name
+function getCampaignName() {
+    return prompt("Enter your campaign name:", "My D&D Campaign");
+}
+
+// Export the chart as an image with labels and key
 function exportAsImage() {
+    const campaignName = getCampaignName();
+    if (!campaignName) return; // Cancel export if no name is provided
+
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = tensionChart.width + 600; // More space for multiple columns
     tempCanvas.height = tensionChart.height + 100;
@@ -286,10 +299,11 @@ function exportAsImage() {
     tensionData.labels.forEach((label, index) => {
         const point = tensionChart.getDatasetMeta(0).data[index];
         tempCtx.beginPath();
-        tempCtx.arc(point.x, point.y + 20, 10, 0, 2 * Math.PI);
+        tempCtx.arc(point.x, point.y + 20, 12, 0, 2 * Math.PI);
         tempCtx.fillStyle = 'white';
         tempCtx.fill();
         tempCtx.strokeStyle = '#8B4513';
+        tempCtx.lineWidth = 1.5;
         tempCtx.stroke();
         tempCtx.fillStyle = '#8B4513';
         tempCtx.font = 'bold 12px "Bookman Old Style", Georgia, serif';
@@ -340,20 +354,20 @@ function exportAsImage() {
         }
     });
 
-    // Add title
+    // Add title with campaign name
     tempCtx.font = 'bold 24px "Bookman Old Style", Georgia, serif';
     tempCtx.textAlign = 'center';
-    tempCtx.fillText('D&D Tension Curve', tempCanvas.width / 2, 30);
+    tempCtx.fillText(`${campaignName} - D&D Tension Curve`, tempCanvas.width / 2, 30);
 
     // Convert to image and trigger download
     const url = tempCanvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'D&D Tension Curve.png';
+    a.download = `${campaignName} - D&D Tension Curve.png`;
     a.click();
 }
 
-// Helper function to wrap text (add this if it's not already in your code)
+// Helper function to wrap text
 function getLines(ctx, text, maxWidth) {
     const words = text.split(" ");
     const lines = [];
@@ -373,7 +387,16 @@ function getLines(ctx, text, maxWidth) {
     return lines;
 }
 
-// Setup event listeners
+// Remove a point from the chart
+function removePoint(index) {
+    tensionData.labels.splice(index, 1);
+    tensionData.datasets[0].data.splice(index, 1);
+    events.splice(index, 1);
+    tensionChart.update();
+    updateEventsList();
+}
+
+// Setup event listeners (continued)
 function setupEventListeners() {
     document.getElementById('event-form').addEventListener('submit', saveEvent);
     document.getElementById('save-btn').addEventListener('click', saveCampaign);
@@ -384,3 +407,84 @@ function setupEventListeners() {
 
 // Initialize the app when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', initApp);
+
+// You may want to add any additional utility functions or event handlers here
+
+// For example, if you want to add a clear all function:
+function clearAll() {
+    tensionData.labels = [];
+    tensionData.datasets[0].data = [];
+    events = [];
+    acts = [];
+    tensionChart.update();
+    updateEventsList();
+    document.getElementById('recommendation-text').innerHTML = '';
+}
+
+// Don't forget to add the clear all button to your HTML and connect it here:
+// document.getElementById('clear-all-btn').addEventListener('click', clearAll);
+
+// If you want to add a function to edit act divisions:
+function editAct(index) {
+    const newPosition = prompt("Enter new position for this act division:", acts[index]);
+    if (newPosition !== null && !isNaN(newPosition)) {
+        acts[index] = parseFloat(newPosition);
+        tensionChart.options.plugins.annotation.annotations[index].value = parseFloat(newPosition);
+        tensionChart.update();
+    }
+}
+
+// Remember to update your HTML to include edit buttons for acts and connect them to this function
+
+// You might also want to add a function to remove act divisions:
+function removeAct(index) {
+    acts.splice(index, 1);
+    tensionChart.options.plugins.annotation.annotations.splice(index, 1);
+    tensionChart.update();
+}
+
+// Again, update your HTML to include remove buttons for acts and connect them to this function
+
+// If you want to add data validation before saving events:
+function validateEventData(name, description, act) {
+    if (name.trim() === '') {
+        alert('Event name cannot be empty');
+        return false;
+    }
+    if (isNaN(act) || act < 1) {
+        alert('Act must be a positive number');
+        return false;
+    }
+    return true;
+}
+
+// Then modify your saveEvent function to use this validation:
+function saveEvent(e) {
+    e.preventDefault();
+    const name = document.getElementById('event-name').value;
+    const description = document.getElementById('event-description').value;
+    const act = document.getElementById('event-act').value;
+    const index = parseInt(document.getElementById('event-index').value);
+
+    if (!validateEventData(name, description, act)) {
+        return;
+    }
+
+    const event = {
+        x: tensionData.labels[index],
+        y: tensionData.datasets[0].data[index],
+        name,
+        description,
+        act
+    };
+
+    events[index] = event;
+
+    updateEventsList();
+    tensionChart.update();
+    console.log('Event saved:', event);
+    alert('Event saved successfully!');
+}
+
+// This completes the app.js file with all the functionality we've discussed
+// and some additional utility functions that might be useful.
