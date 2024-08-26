@@ -262,102 +262,114 @@ function getCampaignName() {
     return prompt("Enter your campaign name:", "My D&D Campaign");
 }
 
-// Export the chart as an image with labels and key
 function exportAsImage() {
     const campaignName = getCampaignName();
     if (!campaignName) return; // Cancel export if no name is provided
 
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = tensionChart.width + 600; // More space for multiple columns
-    tempCanvas.height = tensionChart.height + 100;
-    const tempCtx = tempCanvas.getContext('2d');
+    const ctx = tempCanvas.getContext('2d');
+    
+    // Calculate required width and height
+    const graphWidth = tensionChart.width;
+    const graphHeight = tensionChart.height;
+    const keyWidth = 300;
+    const padding = 40;
+    
+    // Calculate total height based on events
+    let totalHeight = graphHeight + padding * 3; // Extra padding for title
+    let keyHeight = padding * 3; // Start with padding for title and 'Event Key' text
+    let currentAct = '';
+    
+    events.forEach((event, index) => {
+        if (event.act !== currentAct) {
+            keyHeight += 25; // Act title
+            currentAct = event.act;
+        }
+        keyHeight += 25; // Event name
+        const descriptionLines = getLines(ctx, event.description, keyWidth - padding);
+        keyHeight += descriptionLines.length * 20; // Description lines
+        keyHeight += 10; // Spacing between events
+    });
+    
+    totalHeight = Math.max(totalHeight, keyHeight);
+
+    tempCanvas.width = graphWidth + keyWidth + padding * 3;
+    tempCanvas.height = totalHeight;
 
     // Create parchment-like background
-    const gradient = tempCtx.createLinearGradient(0, 0, tempCanvas.width, tempCanvas.height);
+    const gradient = ctx.createLinearGradient(0, 0, tempCanvas.width, tempCanvas.height);
     gradient.addColorStop(0, '#f4e6c5');
     gradient.addColorStop(1, '#e8d5a9');
-    tempCtx.fillStyle = gradient;
-    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
     // Add subtle texture
-    tempCtx.globalAlpha = 0.05;
-    for (let i = 0; i < 500; i++) {
-        tempCtx.fillStyle = Math.random() > 0.5 ? '#000' : '#fff';
-        tempCtx.fillRect(Math.random() * tempCanvas.width, Math.random() * tempCanvas.height, 1, 1);
+    ctx.globalAlpha = 0.05;
+    for (let i = 0; i < 5000; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? '#000' : '#fff';
+        ctx.fillRect(Math.random() * tempCanvas.width, Math.random() * tempCanvas.height, 1, 1);
     }
-    tempCtx.globalAlpha = 1;
+    ctx.globalAlpha = 1;
 
     // Draw a border
-    tempCtx.strokeStyle = '#8B4513';
-    tempCtx.lineWidth = 5;
-    tempCtx.strokeRect(10, 10, tempCanvas.width - 20, tempCanvas.height - 20);
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(10, 10, tempCanvas.width - 20, tempCanvas.height - 20);
 
     // Draw original chart
-    tempCtx.drawImage(tensionChart.canvas, 20, 45, tensionChart.width - 20, tensionChart.height - 20);
+    ctx.drawImage(tensionChart.canvas, padding, padding * 2, graphWidth, graphHeight);
 
     // Add numbered markers for each point
     tensionData.labels.forEach((label, index) => {
         const point = tensionChart.getDatasetMeta(0).data[index];
-        tempCtx.beginPath();
-        tempCtx.arc(point.x, point.y + 20, 12, 0, 2 * Math.PI);
-        tempCtx.fillStyle = 'white';
-        tempCtx.fill();
-        tempCtx.strokeStyle = '#8B4513';
-        tempCtx.lineWidth = 1.5;
-        tempCtx.stroke();
-        tempCtx.fillStyle = '#8B4513';
-        tempCtx.font = 'bold 12px "Bookman Old Style", Georgia, serif';
-        tempCtx.textAlign = 'center';
-        tempCtx.textBaseline = 'middle';
-        tempCtx.fillText(index + 1, point.x, point.y + 20);
+        ctx.beginPath();
+        ctx.arc(point.x + padding, point.y + padding * 2, 12, 0, 2 * Math.PI);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        ctx.strokeStyle = '#8B4513';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#8B4513';
+        ctx.font = 'bold 12px "Bookman Old Style", Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(index + 1, point.x + padding, point.y + padding * 2);
     });
 
+    // Add title
+    ctx.font = 'bold 24px "Bookman Old Style", Georgia, serif';
+    ctx.fillStyle = '#8B4513';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${campaignName} - D&D Tension Curve`, tempCanvas.width / 2, padding);
+
     // Add Event Key
-    tempCtx.font = 'bold 18px "Bookman Old Style", Georgia, serif';
-    tempCtx.fillStyle = '#8B4513';
-    tempCtx.textAlign = 'left';
-    tempCtx.fillText('Event Key:', tensionChart.width + 20, 30);
+    ctx.font = 'bold 18px "Bookman Old Style", Georgia, serif';
+    ctx.textAlign = 'left';
+    let keyY = padding * 2;
+    ctx.fillText('Event Key:', graphWidth + padding * 2, keyY);
+    keyY += 30;
 
-    let keyY = 60;
-    let keyX = tensionChart.width + 20;
-    let currentAct = '';
-    let eventCount = 0;
-
+    currentAct = '';
     events.forEach((event, index) => {
         if (event.act !== currentAct) {
-            if (keyY > tempCanvas.height - 100) {
-                keyY = 60;
-                keyX += 300;
-            }
-            tempCtx.font = 'bold 16px "Bookman Old Style", Georgia, serif';
-            tempCtx.fillText(`Act ${event.act}`, keyX, keyY);
+            ctx.font = 'bold 16px "Bookman Old Style", Georgia, serif';
+            ctx.fillText(`Act ${event.act}`, graphWidth + padding * 2, keyY);
             keyY += 25;
             currentAct = event.act;
         }
 
-        tempCtx.font = 'bold 14px "Bookman Old Style", Georgia, serif';
-        tempCtx.fillText(`${index + 1}. ${event.name}`, keyX, keyY);
-        keyY += 25;
+        ctx.font = 'bold 14px "Bookman Old Style", Georgia, serif';
+        ctx.fillText(`${index + 1}. ${event.name}`, graphWidth + padding * 2, keyY);
+        keyY += 20;
 
-        tempCtx.font = '12px "Bookman Old Style", Georgia, serif';
-        const descriptionLines = getLines(tempCtx, event.description, 270);
+        ctx.font = '12px "Bookman Old Style", Georgia, serif';
+        const descriptionLines = getLines(ctx, event.description, keyWidth - padding);
         descriptionLines.forEach(line => {
-            tempCtx.fillText(line, keyX + 20, keyY);
+            ctx.fillText(line, graphWidth + padding * 2 + 10, keyY);
             keyY += 20;
         });
         keyY += 10; // Extra space between events
-
-        eventCount++;
-        if (eventCount % 5 === 0 && keyY > tempCanvas.height - 100) {
-            keyY = 60;
-            keyX += 300;
-        }
     });
-
-    // Add title with campaign name
-    tempCtx.font = 'bold 24px "Bookman Old Style", Georgia, serif';
-    tempCtx.textAlign = 'center';
-    tempCtx.fillText(`${campaignName} - D&D Tension Curve`, tempCanvas.width / 2, 30);
 
     // Convert to image and trigger download
     const url = tempCanvas.toDataURL('image/png');
@@ -365,6 +377,26 @@ function exportAsImage() {
     a.href = url;
     a.download = `${campaignName} - D&D Tension Curve.png`;
     a.click();
+}
+
+// Helper function to wrap text
+function getLines(ctx, text, maxWidth) {
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
 }
 
 // Helper function to wrap text
