@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D&D Campaign Tension Curve Designer</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.0.2/chartjs-plugin-annotation.min.js"></script>
 </head>
 <body>
     <header>
@@ -19,7 +21,7 @@
                 <h2>Event Details</h2>
                 <form id="event-form">
                     <label for="event-name">Event Name:</label>
-                    <input type="text" id="event-name" name="event-name">
+                    <input type="text" id="event-name" name="event-name" required>
                     
                     <label for="event-description">Description:</label>
                     <textarea id="event-description" name="event-description"></textarea>
@@ -30,18 +32,25 @@
                     <button type="submit">Save Event</button>
                 </form>
             </div>
+            <div id="events-list-container">
+                <h3>Events</h3>
+                <ul id="events-list"></ul>
+            </div>
             <div id="recommendations">
                 <h2>Recommendations</h2>
                 <p id="recommendation-text"></p>
             </div>
+            <div id="controls">
+                <button id="add-act-btn">Add Act/Chapter</button>
+                <button id="save-btn">Save Campaign</button>
+                <button id="load-btn">Load Campaign</button>
+                <button id="export-btn">Export as Image</button>
+            </div>
         </div>
     </main>
     <footer>
-        <button id="save-btn">Save Campaign</button>
-        <button id="load-btn">Load Campaign</button>
-        <button id="export-btn">Export as Image</button>
+        <p>&copy; 2023 D&D Campaign Tension Curve Designer</p>
     </footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
