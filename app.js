@@ -115,37 +115,157 @@ function updateEventForm(event, index) {
 
 // Provide Recommendations
 function provideRecommendation() {
-    // ... (keeping this function as is)
+    const data = tensionData.datasets[0].data;
+    const lastPoint = Math.round(parseFloat(data[data.length - 1]));
+    const secondLastPoint = data.length > 1 ? Math.round(parseFloat(data[data.length - 2])) : 0;
+
+    let recommendation = "";
+    let changeAmount = 0;
+    let direction = "";
+
+    if (data.length < 2) {
+        recommendation = "Add more points to get a recommendation. For the first point, consider a moderate rise in tension (around 20-30%).";
+    } else {
+        changeAmount = lastPoint - secondLastPoint;
+        direction = changeAmount > 0 ? "up" : "down";
+
+        if (direction === "up") {
+            const suggestedChange = Math.min(Math.max(5, changeAmount - 5), 100 - lastPoint);
+            recommendation = `Tension has gone up by ${changeAmount}%. Consider decreasing it by about ${suggestedChange}%.`;
+        } else {
+            const suggestedChange = Math.min(Math.max(5, Math.abs(changeAmount) + 5), lastPoint);
+            recommendation = `Tension has gone down by ${Math.abs(changeAmount)}%. Consider increasing it by about ${suggestedChange}%.`;
+        }
+
+        if (data.length > 5 && Math.random() < 0.3) {
+            recommendation += " Alternatively, you might consider starting a new arc or dramatically changing the current situation.";
+        }
+    }
+
+    recommendation += "\n\nConsider the following methods to adjust tension:\n";
+
+    if (direction === "down" || data.length < 2) {
+        recommendation += "1. Make the Goal More Ambitious: Add a new goal or expand the current one.\n";
+        recommendation += "2. Increase Obstacle Difficulty: Add new challenges or intensify existing ones.\n";
+        recommendation += "3. Raise the Stakes: Increase the consequences of failure or benefits of success.\n";
+    } else {
+        recommendation += "1. Provide an Alternate Goal: Offer a less intense but still satisfying objective.\n";
+        recommendation += "2. Remove or Reduce Obstacles: Make the current challenges easier to overcome.\n";
+        recommendation += "3. Lower the Stakes: Decrease the immediate consequences or benefits.\n";
+    }
+
+    document.getElementById('recommendation-text').innerHTML = recommendation.replace(/\n/g, '<br>');
 }
 
 // Add a new act/chapter division
 function addAct() {
-    // ... (keeping this function as is)
+    const actX = tensionData.labels.length > 0 ? 
+        parseFloat(tensionData.labels[tensionData.labels.length - 1]) : 0;
+    
+    acts.push(actX);
+    
+    tensionChart.options.plugins.annotation.annotations.push({
+        type: 'line',
+        mode: 'vertical',
+        scaleID: 'x',
+        value: actX,
+        borderColor: 'rgb(105, 105, 105)',
+        borderWidth: 2,
+        label: {
+            content: `Act ${acts.length}`,
+            enabled: true
+        }
+    });
+
+    tensionChart.update();
 }
 
 // Save event details
 function saveEvent(e) {
-    // ... (keeping this function as is)
+    e.preventDefault();
+    const name = document.getElementById('event-name').value;
+    const description = document.getElementById('event-description').value;
+    const act = document.getElementById('event-act').value;
+    const index = parseInt(document.getElementById('event-index').value);
+
+    const event = {
+        x: tensionData.labels[index],
+        y: tensionData.datasets[0].data[index],
+        name,
+        description,
+        act
+    };
+
+    events[index] = event;
+
+    updateEventsList();
+    tensionChart.update(); // Force chart update to refresh tooltips
+    console.log('Event saved:', event); // Add this line for debugging
+    alert('Event saved successfully!');
 }
 
 // Update the list of events in the sidebar
 function updateEventsList() {
-    // ... (keeping this function as is)
+    const eventsList = document.getElementById('events-list');
+    eventsList.innerHTML = '';
+    events.forEach((event, index) => {
+        const li = document.createElement('li');
+        li.textContent = `${event.name} (Act ${event.act})`;
+        li.onclick = () => showEventDetails(index);
+        eventsList.appendChild(li);
+    });
 }
 
 // Show event details when clicked in the list
 function showEventDetails(index) {
-    // ... (keeping this function as is)
+    const event = events[index];
+    document.getElementById('event-name').value = event.name;
+    document.getElementById('event-description').value = event.description;
+    document.getElementById('event-act').value = event.act;
+    document.getElementById('event-index').value = index;
 }
 
 // Save the campaign to local storage
 function saveCampaign() {
-    // ... (keeping this function as is)
+    const campaign = {
+        tensionData: tensionData,
+        acts: acts,
+        events: events
+    };
+
+    localStorage.setItem('dndCampaign', JSON.stringify(campaign));
+    alert('Campaign saved successfully!');
 }
 
 // Load the campaign from local storage
 function loadCampaign() {
-    // ... (keeping this function as is)
+    const savedCampaign = localStorage.getItem('dndCampaign');
+    if (savedCampaign) {
+        const campaign = JSON.parse(savedCampaign);
+        tensionData = campaign.tensionData;
+        acts = campaign.acts;
+        events = campaign.events;
+
+        tensionChart.data = tensionData;
+        tensionChart.options.plugins.annotation.annotations = acts.map((act, index) => ({
+            type: 'line',
+            mode: 'vertical',
+            scaleID: 'x',
+            value: act,
+            borderColor: 'rgb(105, 105, 105)',
+            borderWidth: 2,
+            label: {
+                content: `Act ${index + 1}`,
+                enabled: true
+            }
+        }));
+
+        tensionChart.update();
+        updateEventsList();
+        alert('Campaign loaded successfully!');
+    } else {
+        alert('No saved campaign found!');
+    }
 }
 
 // Export the chart as an image
