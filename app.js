@@ -254,15 +254,9 @@ function loadCampaign() {
 }
 
 function exportAsImage() {
-    // Calculate required height for all events
-    const eventKeyHeight = events.reduce((height, event) => {
-        const descriptionLines = getLines(document.createElement('canvas').getContext('2d'), event.description, 370);
-        return height + 25 + descriptionLines.length * 20 + 10;
-    }, 60);
-
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = tensionChart.width + 400; // More space for the key
-    tempCanvas.height = Math.max(tensionChart.height + 100, eventKeyHeight + 50); // Ensure enough height for all events
+    tempCanvas.width = tensionChart.width + 600; // More space for multiple columns
+    tempCanvas.height = tensionChart.height + 100;
     const tempCtx = tempCanvas.getContext('2d');
 
     // Create parchment-like background
@@ -274,7 +268,7 @@ function exportAsImage() {
 
     // Add subtle texture
     tempCtx.globalAlpha = 0.05;
-    for (let i = 0; i < 300; i++) {
+    for (let i = 0; i < 500; i++) {
         tempCtx.fillStyle = Math.random() > 0.5 ? '#000' : '#fff';
         tempCtx.fillRect(Math.random() * tempCanvas.width, Math.random() * tempCanvas.height, 1, 1);
     }
@@ -311,18 +305,39 @@ function exportAsImage() {
     tempCtx.fillText('Event Key:', tensionChart.width + 20, 30);
 
     let keyY = 60;
+    let keyX = tensionChart.width + 20;
+    let currentAct = '';
+    let eventCount = 0;
+
     events.forEach((event, index) => {
+        if (event.act !== currentAct) {
+            if (keyY > tempCanvas.height - 100) {
+                keyY = 60;
+                keyX += 300;
+            }
+            tempCtx.font = 'bold 16px "Bookman Old Style", Georgia, serif';
+            tempCtx.fillText(`Act ${event.act}`, keyX, keyY);
+            keyY += 25;
+            currentAct = event.act;
+        }
+
         tempCtx.font = 'bold 14px "Bookman Old Style", Georgia, serif';
-        tempCtx.fillText(`${index + 1}. ${event.name}`, tensionChart.width + 20, keyY);
+        tempCtx.fillText(`${index + 1}. ${event.name}`, keyX, keyY);
         keyY += 25;
 
         tempCtx.font = '12px "Bookman Old Style", Georgia, serif';
-        const descriptionLines = getLines(tempCtx, event.description, 370);
+        const descriptionLines = getLines(tempCtx, event.description, 270);
         descriptionLines.forEach(line => {
-            tempCtx.fillText(line, tensionChart.width + 40, keyY);
+            tempCtx.fillText(line, keyX + 20, keyY);
             keyY += 20;
         });
         keyY += 10; // Extra space between events
+
+        eventCount++;
+        if (eventCount % 5 === 0 && keyY > tempCanvas.height - 100) {
+            keyY = 60;
+            keyX += 300;
+        }
     });
 
     // Add title
