@@ -54,7 +54,7 @@ function createChart() {
                     callbacks: {
                         label: function(context) {
                             const event = events.find(e => e.x === context.parsed.x && e.y === context.parsed.y);
-                            return event ? event.name : `Tension: ${context.parsed.y}`;
+                            return event ? `${event.name}: Tension ${context.parsed.y}` : `Tension: ${context.parsed.y}`;
                         }
                     }
                 }
@@ -86,37 +86,38 @@ function updateEventForm(x, y) {
 }
 
 // Provide recommendations based on the current tension curve
+// Provide recommendations based on the current tension curve
 function provideRecommendation() {
     const data = tensionData.datasets[0].data;
-    const lastPoint = data[data.length - 1];
-    const secondLastPoint = data.length > 1 ? data[data.length - 2] : 0;
+    const lastPoint = parseFloat(data[data.length - 1]);
+    const secondLastPoint = data.length > 1 ? parseFloat(data[data.length - 2]) : 0;
 
     let recommendation = "";
     let changePercentage = 0;
     let direction = "";
 
     if (data.length < 2) {
-        recommendation = "Add more points to get a recommendation. For the first point, consider a significant rise in tension (around 30-50%).";
+        recommendation = "Add more points to get a recommendation. For the first point, consider a moderate rise in tension (around 20-30%).";
     } else {
         changePercentage = ((lastPoint - secondLastPoint) / secondLastPoint * 100).toFixed(2);
         direction = lastPoint > secondLastPoint ? "up" : "down";
 
         if (direction === "up") {
-            const suggestedChange = Math.min(30, 100 - lastPoint);
-            recommendation = `Tension has gone up by ${changePercentage}%. Consider raising it further by about ${suggestedChange}%.`;
+            const suggestedChange = Math.max(5, Math.abs(changePercentage) - 5);
+            recommendation = `Tension has gone up by ${changePercentage}%. Consider decreasing it by about ${suggestedChange}%.`;
         } else {
-            const suggestedChange = Math.min(20, lastPoint);
-            recommendation = `Tension has gone down by ${Math.abs(changePercentage)}%. Consider decreasing it further by about ${suggestedChange}%.`;
+            const suggestedChange = Math.max(5, Math.abs(changePercentage) + 5);
+            recommendation = `Tension has gone down by ${Math.abs(changePercentage)}%. Consider increasing it by about ${suggestedChange}%.`;
         }
 
         if (data.length > 5 && Math.random() < 0.3) {
-            recommendation += " Alternatively, you might consider resolving the current arc and bringing the tension to zero.";
+            recommendation += " Alternatively, you might consider starting a new arc or dramatically changing the current situation.";
         }
     }
 
     recommendation += "\n\nConsider the following methods to adjust tension:\n";
 
-    if (direction === "up" || data.length < 2) {
+    if (direction === "down" || data.length < 2) {
         recommendation += "1. Make the Goal More Ambitious: Add a new goal or expand the current one.\n";
         recommendation += "2. Increase Obstacle Difficulty: Add new challenges or intensify existing ones.\n";
         recommendation += "3. Raise the Stakes: Increase the consequences of failure or benefits of success.\n";
@@ -128,7 +129,6 @@ function provideRecommendation() {
 
     document.getElementById('recommendation-text').innerHTML = recommendation.replace(/\n/g, '<br>');
 }
-
 // Add a new act/chapter division
 function addAct() {
     const actX = tensionData.labels.length > 0 ? 
