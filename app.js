@@ -89,21 +89,44 @@ function updateEventForm(x, y) {
 function provideRecommendation() {
     const data = tensionData.datasets[0].data;
     const lastPoint = data[data.length - 1];
-    const secondLastPoint = data[data.length - 2];
+    const secondLastPoint = data.length > 1 ? data[data.length - 2] : 0;
 
-    let recommendation = "Based on the tension curve principles: ";
+    let recommendation = "";
+    let changePercentage = 0;
+    let direction = "";
 
     if (data.length < 2) {
-        recommendation += "Add more points to get a recommendation.";
-    } else if (lastPoint > secondLastPoint) {
-        recommendation += "Consider decreasing tension slightly for variety, or maintain for building suspense.";
-    } else if (lastPoint < secondLastPoint) {
-        recommendation += "Think about raising tension soon to maintain engagement.";
+        recommendation = "Add more points to get a recommendation. For the first point, consider a significant rise in tension (around 30-50%).";
     } else {
-        recommendation += "Consider creating a significant change in tension to drive the story forward.";
+        changePercentage = ((lastPoint - secondLastPoint) / secondLastPoint * 100).toFixed(2);
+        direction = lastPoint > secondLastPoint ? "up" : "down";
+
+        if (direction === "up") {
+            const suggestedChange = Math.min(30, 100 - lastPoint);
+            recommendation = `Tension has gone up by ${changePercentage}%. Consider raising it further by about ${suggestedChange}%.`;
+        } else {
+            const suggestedChange = Math.min(20, lastPoint);
+            recommendation = `Tension has gone down by ${Math.abs(changePercentage)}%. Consider decreasing it further by about ${suggestedChange}%.`;
+        }
+
+        if (data.length > 5 && Math.random() < 0.3) {
+            recommendation += " Alternatively, you might consider resolving the current arc and bringing the tension to zero.";
+        }
     }
 
-    document.getElementById('recommendation-text').textContent = recommendation;
+    recommendation += "\n\nConsider the following methods to adjust tension:\n";
+
+    if (direction === "up" || data.length < 2) {
+        recommendation += "1. Make the Goal More Ambitious: Add a new goal or expand the current one.\n";
+        recommendation += "2. Increase Obstacle Difficulty: Add new challenges or intensify existing ones.\n";
+        recommendation += "3. Raise the Stakes: Increase the consequences of failure or benefits of success.\n";
+    } else {
+        recommendation += "1. Provide an Alternate Goal: Offer a less intense but still satisfying objective.\n";
+        recommendation += "2. Remove or Reduce Obstacles: Make the current challenges easier to overcome.\n";
+        recommendation += "3. Lower the Stakes: Decrease the immediate consequences or benefits.\n";
+    }
+
+    document.getElementById('recommendation-text').innerHTML = recommendation.replace(/\n/g, '<br>');
 }
 
 // Add a new act/chapter division
