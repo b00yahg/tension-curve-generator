@@ -83,7 +83,7 @@ function addDataPoint(x, y) {
         act: ''
     };
     
-    events.push(tempEvent);  // Add this line to ensure the event is added to the events array
+    events.push(tempEvent);
     
     tensionChart.update();
     updateEventForm(tempEvent, index);
@@ -184,8 +184,8 @@ function saveEvent(e) {
     events[index] = event;
 
     updateEventsList();
-    tensionChart.update(); // Force chart update to refresh tooltips
-    console.log('Event saved:', event); // Add this line for debugging
+    tensionChart.update();
+    console.log('Event saved:', event);
     alert('Event saved successfully!');
 }
 
@@ -253,13 +253,63 @@ function loadCampaign() {
     }
 }
 
-// Export the chart as an image
+// Export the chart as an image with labels
 function exportAsImage() {
-    const url = tensionChart.toBase64Image();
+    // Create a temporary canvas to draw on
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = tensionChart.width;
+    tempCanvas.height = tensionChart.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // Draw the original chart to the temporary canvas
+    tempCtx.drawImage(tensionChart.canvas, 0, 0);
+
+    // Add labels for each point
+    tensionChart.data.labels.forEach((label, index) => {
+        const event = events[index];
+        if (event) {
+            const point = tensionChart.getDatasetMeta(0).data[index];
+            tempCtx.fillStyle = 'black';
+            tempCtx.font = '12px Arial';
+            tempCtx.textAlign = 'center';
+            tempCtx.fillText(event.name, point.x, point.y - 10);
+            
+            // Add description if it exists and there's space
+            if (event.description) {
+                const lines = getLines(tempCtx, event.description, 150);
+                lines.forEach((line, lineIndex) => {
+                    tempCtx.fillText(line, point.x, point.y + 15 + (lineIndex * 15));
+                });
+            }
+        }
+    });
+
+    // Convert the temporary canvas to a data URL and trigger download
+    const url = tempCanvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'tension_curve.png';
+    a.download = 'tension_curve_with_labels.png';
     a.click();
+}
+
+// Helper function to wrap text
+function getLines(ctx, text, maxWidth) {
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
 }
 
 // Setup event listeners
