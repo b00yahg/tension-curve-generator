@@ -60,7 +60,7 @@ function createChart() {
                     anchor: 'end',
                     align: 'top',
                     formatter: function(value, context) {
-                        return events[context.dataIndex].name;
+                        return events[context.dataIndex] ? events[context.dataIndex].name : '';
                     },
                     font: {
                         weight: 'bold',
@@ -68,6 +68,9 @@ function createChart() {
                     },
                     color: '#483C32',
                     display: false // Hidden by default
+                },
+                annotation: {
+                    annotations: []
                 }
             }
         }
