@@ -265,7 +265,6 @@ function loadCampaign() {
     }
 }
 
-// Export the chart as an image with labels and key
 function exportAsImage() {
     const campaignName = getCampaignName();
     if (!campaignName) return; // Cancel export if no name is provided
@@ -395,11 +394,41 @@ function exportAsImage() {
     });
 
     // Convert to image and trigger download
-    const url = tempCanvas.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${campaignName} - D&D Tension Curve.png`;
-    a.click();
+    tempCanvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${campaignName} - D&D Tension Curve.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+}
+
+// Add this function to get the campaign name
+function getCampaignName() {
+    return prompt("Enter a name for your campaign:");
+}
+
+// Helper function to wrap text
+function getLines(ctx, text, maxWidth) {
+    const words = text.split(" ");
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = ctx.measureText(currentLine + " " + word).width;
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+        }
+    }
+    lines.push(currentLine);
+    return lines;
 }
 
 // Remove a point from the chart
